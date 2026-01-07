@@ -1,15 +1,21 @@
 import json
-
 import requests
 
-# TODO: send a GET using the URL http://127.0.0.1:8000
-r = None # Your code here
+# URL for the local FastAPI server
+BASE_URL = "http://127.0.0.1:8000"
 
-# TODO: print the status code
-# print()
-# TODO: print the welcome message
-# print()
-
+# Send a GET request to the root endpoint and print status and welcome message
+try:
+    r = requests.get(BASE_URL)
+    print("GET status:", r.status_code)
+    try:
+        payload = r.json()
+        # welcome message commonly under 'message' or similar; print full payload if unsure
+        print("GET response:", json.dumps(payload, indent=2))
+    except ValueError:
+        print("GET response (text):", r.text)
+except requests.exceptions.RequestException as e:
+    print("GET request failed:", e)
 
 
 data = {
@@ -29,10 +35,15 @@ data = {
     "native-country": "United-States",
 }
 
-# TODO: send a POST using the data above
-r = None # Your code here
-
-# TODO: print the status code
-# print()
-# TODO: print the result
-# print()
+# Send a POST request to the prediction endpoint and print status and result
+predict_url = f"{BASE_URL}/data/"
+try:
+    r = requests.post(predict_url, json=data)
+    print("POST status:", r.status_code)
+    try:
+        payload = r.json()
+        print("POST response:", json.dumps(payload, indent=2))
+    except ValueError:
+        print("POST response (text):", r.text)
+except requests.exceptions.RequestException as e:
+    print("POST request failed:", e)

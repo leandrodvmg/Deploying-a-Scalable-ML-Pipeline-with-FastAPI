@@ -26,24 +26,29 @@ class Data(BaseModel):
     hours_per_week: int = Field(..., example=40, alias="hours-per-week")
     native_country: str = Field(..., example="United-States", alias="native-country")
 
-path = None # TODO: enter the path for the saved encoder 
-encoder = load_model(path)
+encoder_path = os.path.join("model", "encoder.pkl")
+encoder = load_model(encoder_path)
 
-path = None # TODO: enter the path for the saved model 
-model = load_model(path)
+model_path = os.path.join("model", "model.pkl")
+model = load_model(model_path)
 
-# TODO: create a RESTful API using FastAPI
-app = None # your code here
+# load scaler (used to scale continuous features in the same way as training)
+scaler_path = os.path.join("model", "scaler.pkl")
+try:
+    scaler = load_model(scaler_path)
+except Exception:
+    scaler = None
 
-# TODO: create a GET on the root giving a welcome message
+# Create the FastAPI app
+app = FastAPI()
+
+
 @app.get("/")
 async def get_root():
-    """ Say hello!"""
-    # your code here
-    pass
+    """Return a short welcome message."""
+    return {"message": "Welcome to the Income Prediction API. POST to /data/ to get an inference."}
 
 
-# TODO: create a POST on a different path that does model inference
 @app.post("/data/")
 async def post_inference(data: Data):
     # DO NOT MODIFY: turn the Pydantic model into a dict.
@@ -65,10 +70,17 @@ async def post_inference(data: Data):
         "native-country",
     ]
     data_processed, _, _, _ = process_data(
-        # your code here
-        # use data as data input
-        # use training = False
-        # do not need to pass lb as input
+        data,
+        categorical_features=cat_features,
+        label=None,
+        training=False,
+        encoder=encoder,
+        lb=None,
     )
-    _inference = None # your code here to predict the result using data_processed
+
+    # apply scaler if available (scaler was fitted on the full feature vector after encoding)
+    if scaler is not None:
+        data_processed = scaler.transform(data_processed)
+
+    _inference = inference(model, data_processed)
     return {"result": apply_label(_inference)}
